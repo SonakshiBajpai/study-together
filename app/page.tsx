@@ -16,20 +16,34 @@ import {
   Play,
   Plus,
   Check,
-  Maximize,
   Image,
   X,
   Info,
   User,
   BookOpen,
-  Leaf,
-  CloudRain,
   Flame,
-  Library,
   RefreshCw,
   Expand,
   Coffee,
   Menu,
+  Zap,
+  RotateCcw,
+  Settings,
+  Calendar,
+  CheckCircle,
+  Circle,
+  Edit,
+  Trash2,
+  ChevronRight,
+  Award,
+  TrendingUp,
+  Medal,
+  Crown,
+  MoreVertical,
+  BarChart3,
+  ArrowLeft,
+  Maximize,
+  Minimize,
 } from "lucide-react";
 
 //interfaces
@@ -153,12 +167,12 @@ interface LeaderboardUser {
   rank: number;
   username: string;
   avatar: string;
-  studyTime: number;
+  studyTime: string;
   goals: number;
   streak: number;
   points: number;
   badge: string;
-  level: string;
+  level: number;
 }
 
 interface LeaderboardData {
@@ -170,7 +184,7 @@ interface LeaderboardData {
 export default function StudyApp() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("timer");
-  const [currentRoute, setCurrentRoute] = useState<string>("solostudy");
+  const [currentRoute, setCurrentRoute] = useState("dashboard");
   const [breakTime, setBreakTime] = useState<number>(0);
   const [timerState, setTimerState] = useState<TimerState>({
     time: 3000,
@@ -182,6 +196,14 @@ export default function StudyApp() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const breakIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isActiveBefore1130, setIsActiveBefore1130] = useState(false);
+  const [totalTimeSpent, setTotalTimeSpent] = useState(0);
+  const [stats, setStats] = useState({
+    totalStudyTime: '2h 45m',
+    goalsCompleted: 12,
+    currentStreak: 5,
+    globalRank: 247
+  });
 
   // Listen for custom navigation events
   useEffect(() => {
@@ -238,6 +260,25 @@ export default function StudyApp() {
       }
     };
   }, []);
+
+  // PlaceholderContent component
+  const PlaceholderContent = () => {
+    if (currentRoute === "dashboard") {
+      return <DashboardContent setCurrentRoute={setCurrentRoute} />;
+    }
+    if (currentRoute === "leaderboard") {
+      return <LeaderboardContent />;
+    }
+    
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="text-gray-400 text-lg mb-2">🚧</div>
+          <div className="text-gray-500">This page is under construction</div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -360,7 +401,7 @@ export default function StudyApp() {
         ) : currentRoute === "studygoals" ? (
           <StudyGoalsContent />
         ) : (
-          <PlaceholderContent route={currentRoute} />
+          <PlaceholderContent />
         )}
 
         {activeModal === "break" && (
@@ -401,34 +442,14 @@ function MobileNavItem({
   );
 }
 
-function PlaceholderContent({ route }: { route: string }) {
-  if (route === "dashboard") {
-    return <DashboardContent />;
-  }
-  
-  if (route === "leaderboard") {
-    return <LeaderboardContent />;
-  }
-  
-  return (
-    <div className="flex-1 bg-gray-900 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-4">
-          #{route}
-        </h1>
-        <p className="text-gray-400">This page is under construction</p>
-      </div>
-    </div>
-  );
-}
-
-function DashboardContent() {
+// Dashboard Content Component
+const DashboardContent = ({ setCurrentRoute }: { setCurrentRoute: (route: string) => void }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [stats, setStats] = useState({
-    studyTime: 127,
-    goalsCompleted: 23,
-    streak: 5,
-    rank: 1842
+  const [userStats] = useState({
+    totalStudyTime: '2h 45m',
+    goalsCompleted: 12,
+    currentStreak: 5,
+    globalRank: 247
   });
 
   useEffect(() => {
@@ -441,22 +462,21 @@ function DashboardContent() {
 
   const getGreeting = () => {
     const hour = currentTime.getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+  const formatTime = () => {
+    return currentTime.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: 'numeric',
+      minute: '2-digit'
     });
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+  const formatDate = () => {
+    return currentTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -465,238 +485,222 @@ function DashboardContent() {
   };
 
   return (
-    <div className="flex-1 relative overflow-hidden h-screen">
+    <div className="h-screen bg-gray-900 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0">
         <img
           src="https://i.pinimg.com/originals/64/ff/aa/64ffaa8061d3643b563785e95f040705.gif"
-          alt="Anime Background"
-          className="w-full h-full object-cover"
+          alt="Animated cherry blossoms background"
+          className="w-full h-full object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-900/40 via-purple-900/50 to-indigo-900/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-900/40 via-purple-900/30 to-indigo-900/40"></div>
         <div className="absolute inset-0 bg-black/20"></div>
       </div>
 
-      {/* Hero Section */}
-      <div className="relative z-10 h-full flex flex-col">
-        {/* Compact Header */}
-        <div className="bg-gradient-to-r from-pink-900/20 via-purple-900/20 to-indigo-900/20 backdrop-blur-lg border-b border-pink-800/30 px-4 md:px-6 py-3">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent">
-                {getGreeting()}, Dream! 🌸
-              </h1>
-              <p className="text-pink-200/80 mt-1 text-base">
-                Ready to blossom into your best self today?
-              </p>
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col p-4">
+        {/* Header */}
+        <div className="text-center mb-4">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
+              {getGreeting()}! 🌸
+            </h1>
+          </div>
+          <div className="text-pink-200/90 text-lg font-medium">
+            {formatTime()} • {formatDate()}
+          </div>
+        </div>
+
+        {/* Hero Section */}
+        <div className="text-center mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent mb-2">
+            Ready to Achieve More?
+          </h2>
+          <p className="text-pink-200/80 text-sm md:text-base max-w-2xl mx-auto">
+            Your learning journey continues. Track progress, set goals, and stay motivated with your personalized dashboard.
+          </p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+            <div className="bg-gradient-to-br from-pink-900/40 to-purple-900/40 backdrop-blur-lg rounded-xl p-4 border border-pink-800/30 hover:border-pink-600/50 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-2xl font-bold text-pink-200">{userStats.totalStudyTime}</div>
+              <div className="text-pink-300/80 text-xs uppercase tracking-wide">Study Time</div>
+              <div className="mt-1 text-xs text-pink-400">This month</div>
             </div>
-            <div className="text-right">
-              <div className="text-xl font-mono font-bold text-pink-200">
-                {formatTime(currentTime)}
+            <div className="bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-lg rounded-xl p-4 border border-purple-800/30 hover:border-purple-600/50 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-2xl font-bold text-purple-200">{userStats.goalsCompleted}</div>
+              <div className="text-purple-300/80 text-xs uppercase tracking-wide">Goals</div>
+              <div className="mt-1 text-xs text-purple-400">Completed</div>
+            </div>
+            <div className="bg-gradient-to-br from-indigo-900/40 to-blue-900/40 backdrop-blur-lg rounded-xl p-4 border border-indigo-800/30 hover:border-indigo-600/50 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-2xl font-bold text-indigo-200">{userStats.currentStreak}</div>
+              <div className="text-indigo-300/80 text-xs uppercase tracking-wide">Streak</div>
+              <div className="mt-1 text-xs text-indigo-400">Days</div>
+            </div>
+            <div className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 backdrop-blur-lg rounded-xl p-4 border border-blue-800/30 hover:border-blue-600/50 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-2xl font-bold text-blue-200">#{userStats.globalRank}</div>
+              <div className="text-blue-300/80 text-xs uppercase tracking-wide">Global</div>
+              <div className="mt-1 text-xs text-blue-400">Rank</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <button 
+              onClick={() => setCurrentRoute('solostudy')}
+              className="group bg-gradient-to-r from-pink-600/20 to-purple-600/20 backdrop-blur-lg border border-pink-600/30 hover:border-pink-500/50 rounded-xl p-4 transition-all duration-300 hover:transform hover:scale-105 text-left"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-pink-200 mb-1">Start Study Session</h3>
+                  <p className="text-pink-300/70 text-sm">Focus with Pomodoro timer</p>
+                </div>
+                <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Play className="w-5 h-5 text-white" />
+                </div>
               </div>
-              <div className="text-pink-300/80 text-sm">
-                {formatDate(currentTime)}
+            </button>
+            
+            <button 
+              onClick={() => setCurrentRoute('studygoals')}
+              className="group bg-gradient-to-r from-purple-600/20 to-indigo-600/20 backdrop-blur-lg border border-purple-600/30 hover:border-purple-500/50 rounded-xl p-4 transition-all duration-300 hover:transform hover:scale-105 text-left"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-200 mb-1">Review Goals</h3>
+                  <p className="text-purple-300/70 text-sm">Track your progress</p>
+                </div>
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <Target className="w-5 h-5 text-white" />
+                </div>
               </div>
+            </button>
+          </div>
+
+          {/* Motivational Quote */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20 mb-4">
+            <div className="text-center">
+              <p className="text-white/90 italic text-sm mb-2">
+                "Success is the sum of small efforts, repeated day in and day out."
+              </p>
+              <p className="text-white/60 text-xs">— Robert Collier</p>
             </div>
           </div>
         </div>
 
-        {/* Main Content - Centered and Compact */}
-        <div className="flex-1 flex items-center justify-center px-4 md:px-6 py-4">
-          <div className="max-w-5xl mx-auto text-center w-full">
-            {/* Main Hero Message */}
-            <div className="mb-6">
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent mb-4 leading-tight">
-                Your Study Journey Awaits
-              </h2>
-              <p className="text-lg md:text-xl text-pink-100/90 max-w-2xl mx-auto leading-relaxed">
-                Like cherry blossoms that bloom with patience and time, your goals flourish with consistent effort.
-              </p>
-            </div>
-
-            {/* Compact Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-              <div className="bg-gradient-to-br from-pink-900/40 to-purple-900/40 backdrop-blur-lg rounded-xl p-4 border border-pink-800/30 hover:border-pink-600/50 transition-all duration-300 hover:transform hover:scale-105">
-                <div className="text-2xl font-bold text-pink-200">{stats.studyTime}h</div>
-                <div className="text-pink-300/80 text-xs uppercase tracking-wide">Study Time</div>
-                <div className="mt-1 text-xs text-pink-400">This month</div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-lg rounded-xl p-4 border border-purple-800/30 hover:border-purple-600/50 transition-all duration-300 hover:transform hover:scale-105">
-                <div className="text-2xl font-bold text-purple-200">{stats.goalsCompleted}</div>
-                <div className="text-purple-300/80 text-xs uppercase tracking-wide">Goals Done</div>
-                <div className="mt-1 text-xs text-purple-400">Total completed</div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-indigo-900/40 to-cyan-900/40 backdrop-blur-lg rounded-xl p-4 border border-indigo-800/30 hover:border-indigo-600/50 transition-all duration-300 hover:transform hover:scale-105">
-                <div className="text-2xl font-bold text-indigo-200">{stats.streak}</div>
-                <div className="text-indigo-300/80 text-xs uppercase tracking-wide">Day Streak</div>
-                <div className="mt-1 text-xs text-indigo-400">Keep it going!</div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-cyan-900/40 to-teal-900/40 backdrop-blur-lg rounded-xl p-4 border border-cyan-800/30 hover:border-cyan-600/50 transition-all duration-300 hover:transform hover:scale-105">
-                <div className="text-2xl font-bold text-cyan-200">#{stats.rank}</div>
-                <div className="text-cyan-300/80 text-xs uppercase tracking-wide">Rank</div>
-                <div className="mt-1 text-xs text-cyan-400">Global leaderboard</div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6">
-              <button 
-                onClick={() => {
-                  const event = new CustomEvent('navigate-to-route', { detail: 'solostudy' });
-                  window.dispatchEvent(event);
-                }}
-                className="group relative px-6 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-400 hover:via-purple-400 hover:to-indigo-400 rounded-full font-semibold text-white text-base transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-pink-500/25"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  <Play size={18} />
-                  Start Study Session
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 rounded-full blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-              </button>
-              
-              <button 
-                onClick={() => {
-                  const event = new CustomEvent('navigate-to-route', { detail: 'studygoals' });
-                  window.dispatchEvent(event);
-                }}
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-lg border border-white/30 hover:border-white/50 rounded-full font-semibold text-white text-base transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
-              >
-                <Target size={18} />
-                Review Goals
-              </button>
-            </div>
-
-            {/* Compact Motivational Quote */}
-            <div className="bg-gradient-to-r from-pink-900/20 via-purple-900/20 to-indigo-900/20 backdrop-blur-lg rounded-xl p-6 border border-pink-800/30 max-w-xl mx-auto">
-              <div className="text-lg font-light text-pink-100 italic mb-2">
-                "Every expert was once a beginner."
-              </div>
-              <div className="text-pink-300/80 text-sm">
-                — Robin Sharma
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Compact Bottom Stats Bar */}
-        <div className="bg-gradient-to-r from-pink-900/20 via-purple-900/20 to-indigo-900/20 backdrop-blur-lg border-t border-pink-800/30 px-4 md:px-6 py-3">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-sm">
+        {/* Bottom Stats Bar */}
+        <div className="bg-gradient-to-r from-gray-900/60 to-gray-800/60 backdrop-blur-lg rounded-xl p-3 border border-gray-700/50">
+          <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></div>
-                <span className="text-pink-200">785 users studying</span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-gray-300">1,247 students studying now</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock size={14} className="text-purple-300" />
-                <span className="text-purple-200">Peak: 2-4 PM</span>
-              </div>
+              <div className="text-gray-400">Peak focus: 3:00-5:00 PM</div>
             </div>
-            <div className="text-indigo-200">
-              Next reminder in 25 min
-            </div>
+            <div className="text-gray-400">Next study reminder in 2h 15m</div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 function LeaderboardContent() {
-  const [selectedTimeframe, setSelectedTimeframe] = useState("Weekly");
-  const [selectedCategory, setSelectedCategory] = useState("Study Time");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'weekly' | 'monthly'>('weekly');
+  const [selectedCategory, setSelectedCategory] = useState<'study_time' | 'goals' | 'streak'>('study_time');
   
   // Mock leaderboard data
   const leaderboardData: LeaderboardData = {
     "Study Time": {
       "Weekly": [
-        { rank: 1, username: "StudyNinja", avatar: "🥷", studyTime: 47.5, goals: 28, streak: 12, points: 2847, badge: "🏆", level: "Expert" },
-        { rank: 2, username: "FocusMaster", avatar: "🧠", studyTime: 45.2, goals: 25, streak: 9, points: 2652, badge: "🥈", level: "Expert" },
-        { rank: 3, username: "BookWorm", avatar: "📚", studyTime: 42.8, goals: 31, streak: 15, points: 2438, badge: "🥉", level: "Expert" },
-        { rank: 4, username: "ZenLearner", avatar: "🧘", studyTime: 40.1, goals: 22, streak: 7, points: 2301, badge: "⭐", level: "Advanced" },
-        { rank: 5, username: "CramQueen", avatar: "👑", studyTime: 38.7, goals: 29, streak: 11, points: 2189, badge: "⭐", level: "Advanced" },
-        { rank: 6, username: "DeepThinker", avatar: "💭", studyTime: 36.3, goals: 19, streak: 5, points: 2087, badge: "⭐", level: "Advanced" },
-        { rank: 7, username: "FlashCardHero", avatar: "⚡", studyTime: 34.9, goals: 26, streak: 8, points: 1954, badge: "⭐", level: "Advanced" },
-        { rank: 8, username: "StudyBuddy", avatar: "🤝", studyTime: 32.5, goals: 17, streak: 4, points: 1823, badge: "⭐", level: "Intermediate" },
-        { rank: 9, username: "NightOwl", avatar: "🦉", studyTime: 30.2, goals: 21, streak: 6, points: 1697, badge: "⭐", level: "Intermediate" },
-        { rank: 10, username: "EarlyBird", avatar: "🐦", studyTime: 28.8, goals: 24, streak: 10, points: 1589, badge: "⭐", level: "Intermediate" },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: 12.7, goals: 8, streak: 2, points: 542, badge: "🔰", level: "Beginner" }
+        { rank: 1, username: "StudyNinja", avatar: "🥷", studyTime: "47.5", goals: 28, streak: 12, points: 2847, badge: "🏆", level: 10 },
+        { rank: 2, username: "FocusMaster", avatar: "🧠", studyTime: "45.2", goals: 25, streak: 9, points: 2652, badge: "🥈", level: 9 },
+        { rank: 3, username: "BookWorm", avatar: "📚", studyTime: "42.8", goals: 31, streak: 15, points: 2438, badge: "🥉", level: 8 },
+        { rank: 4, username: "ZenLearner", avatar: "🧘", studyTime: "40.1", goals: 22, streak: 7, points: 2301, badge: "⭐", level: 7 },
+        { rank: 5, username: "CramQueen", avatar: "👑", studyTime: "38.7", goals: 29, streak: 11, points: 2189, badge: "⭐", level: 6 },
+        { rank: 6, username: "DeepThinker", avatar: "💭", studyTime: "36.3", goals: 19, streak: 5, points: 2087, badge: "⭐", level: 5 },
+        { rank: 7, username: "FlashCardHero", avatar: "⚡", studyTime: "34.9", goals: 26, streak: 8, points: 1954, badge: "⭐", level: 4 },
+        { rank: 8, username: "StudyBuddy", avatar: "🤝", studyTime: "32.5", goals: 17, streak: 4, points: 1823, badge: "⭐", level: 3 },
+        { rank: 9, username: "NightOwl", avatar: "🦉", studyTime: "30.2", goals: 21, streak: 6, points: 1697, badge: "⭐", level: 2 },
+        { rank: 10, username: "EarlyBird", avatar: "🐦", studyTime: "28.8", goals: 24, streak: 10, points: 1589, badge: "⭐", level: 1 },
+        { rank: 1842, username: "You", avatar: "😊", studyTime: "12.7", goals: 8, streak: 2, points: 542, badge: "🔰", level: 0 }
       ],
       "Monthly": [
-        { rank: 1, username: "StudyNinja", avatar: "🥷", studyTime: 189.3, goals: 112, streak: 28, points: 11847, badge: "🏆", level: "Expert" },
-        { rank: 2, username: "BookWorm", avatar: "📚", studyTime: 176.5, goals: 124, streak: 31, points: 10952, badge: "🥈", level: "Expert" },
-        { rank: 3, username: "FocusMaster", avatar: "🧠", studyTime: 171.8, goals: 98, streak: 22, points: 10438, badge: "🥉", level: "Expert" },
-        { rank: 4, username: "CramQueen", avatar: "👑", studyTime: 158.2, goals: 116, streak: 25, points: 9789, badge: "⭐", level: "Expert" },
-        { rank: 5, username: "ZenLearner", avatar: "🧘", studyTime: 152.7, goals: 89, streak: 18, points: 9301, badge: "⭐", level: "Advanced" },
-        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: 147.1, goals: 104, streak: 21, points: 8954, badge: "⭐", level: "Advanced" },
-        { rank: 7, username: "DeepThinker", avatar: "💭", studyTime: 142.8, goals: 76, streak: 14, points: 8687, badge: "⭐", level: "Advanced" },
-        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: 138.9, goals: 93, streak: 19, points: 8423, badge: "⭐", level: "Advanced" },
-        { rank: 9, username: "StudyBuddy", avatar: "🤝", studyTime: 134.2, goals: 81, streak: 12, points: 8089, badge: "⭐", level: "Intermediate" },
-        { rank: 10, username: "EarlyBird", avatar: "🐦", studyTime: 129.7, goals: 88, streak: 23, points: 7854, badge: "⭐", level: "Intermediate" },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: 48.3, goals: 23, streak: 5, points: 2342, badge: "🔰", level: "Beginner" }
+        { rank: 1, username: "StudyNinja", avatar: "🥷", studyTime: "189.3", goals: 112, streak: 28, points: 11847, badge: "🏆", level: 10 },
+        { rank: 2, username: "BookWorm", avatar: "📚", studyTime: "176.5", goals: 124, streak: 31, points: 10952, badge: "🥈", level: 9 },
+        { rank: 3, username: "FocusMaster", avatar: "🧠", studyTime: "171.8", goals: 98, streak: 22, points: 10438, badge: "🥉", level: 8 },
+        { rank: 4, username: "CramQueen", avatar: "👑", studyTime: "158.2", goals: 116, streak: 25, points: 9789, badge: "⭐", level: 7 },
+        { rank: 5, username: "ZenLearner", avatar: "🧘", studyTime: "152.7", goals: 89, streak: 18, points: 9301, badge: "⭐", level: 6 },
+        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: "147.1", goals: 104, streak: 21, points: 8954, badge: "⭐", level: 5 },
+        { rank: 7, username: "DeepThinker", avatar: "💭", studyTime: "142.8", goals: 76, streak: 14, points: 8687, badge: "⭐", level: 4 },
+        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: "138.9", goals: 93, streak: 19, points: 8423, badge: "⭐", level: 3 },
+        { rank: 9, username: "StudyBuddy", avatar: "🤝", studyTime: "134.2", goals: 81, streak: 12, points: 8089, badge: "⭐", level: 2 },
+        { rank: 10, username: "EarlyBird", avatar: "🐦", studyTime: "129.7", goals: 88, streak: 23, points: 7854, badge: "⭐", level: 1 },
+        { rank: 1842, username: "You", avatar: "😊", studyTime: "48.3", goals: 23, streak: 5, points: 2342, badge: "🔰", level: 0 }
       ]
     },
     "Goals Completed": {
       "Weekly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: 42.8, goals: 31, streak: 15, points: 2438, badge: "🏆", level: "Expert" },
-        { rank: 2, username: "CramQueen", avatar: "👑", studyTime: 38.7, goals: 29, streak: 11, points: 2189, badge: "🥈", level: "Advanced" },
-        { rank: 3, username: "StudyNinja", avatar: "🥷", studyTime: 47.5, goals: 28, streak: 12, points: 2847, badge: "🥉", level: "Expert" },
-        { rank: 4, username: "FlashCardHero", avatar: "⚡", studyTime: 34.9, goals: 26, streak: 8, points: 1954, badge: "⭐", level: "Advanced" },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: 45.2, goals: 25, streak: 9, points: 2652, badge: "⭐", level: "Expert" },
-        { rank: 6, username: "EarlyBird", avatar: "🐦", studyTime: 28.8, goals: 24, streak: 10, points: 1589, badge: "⭐", level: "Intermediate" },
-        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: 40.1, goals: 22, streak: 7, points: 2301, badge: "⭐", level: "Advanced" },
-        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: 30.2, goals: 21, streak: 6, points: 1697, badge: "⭐", level: "Intermediate" },
-        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: 36.3, goals: 19, streak: 5, points: 2087, badge: "⭐", level: "Advanced" },
-        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: 32.5, goals: 17, streak: 4, points: 1823, badge: "⭐", level: "Intermediate" },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: 12.7, goals: 8, streak: 2, points: 542, badge: "🔰", level: "Beginner" }
+        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "42.8", goals: 31, streak: 15, points: 2438, badge: "🏆", level: 8 },
+        { rank: 2, username: "CramQueen", avatar: "👑", studyTime: "38.7", goals: 29, streak: 11, points: 2189, badge: "🥈", level: 6 },
+        { rank: 3, username: "StudyNinja", avatar: "🥷", studyTime: "47.5", goals: 28, streak: 12, points: 2847, badge: "🥉", level: 7 },
+        { rank: 4, username: "FlashCardHero", avatar: "⚡", studyTime: "34.9", goals: 26, streak: 8, points: 1954, badge: "⭐", level: 4 },
+        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "45.2", goals: 25, streak: 9, points: 2652, badge: "⭐", level: 5 },
+        { rank: 6, username: "EarlyBird", avatar: "🐦", studyTime: "28.8", goals: 24, streak: 10, points: 1589, badge: "⭐", level: 1 },
+        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: "40.1", goals: 22, streak: 7, points: 2301, badge: "⭐", level: 2 },
+        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: "30.2", goals: 21, streak: 6, points: 1697, badge: "⭐", level: 0 },
+        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: "36.3", goals: 19, streak: 5, points: 2087, badge: "⭐", level: 3 },
+        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: "32.5", goals: 17, streak: 4, points: 1823, badge: "⭐", level: 2 },
+        { rank: 1842, username: "You", avatar: "😊", studyTime: "12.7", goals: 8, streak: 2, points: 542, badge: "🔰", level: 0 }
       ],
       "Monthly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: 176.5, goals: 124, streak: 31, points: 10952, badge: "🏆", level: "Expert" },
-        { rank: 2, username: "CramQueen", avatar: "👑", studyTime: 158.2, goals: 116, streak: 25, points: 9789, badge: "🥈", level: "Expert" },
-        { rank: 3, username: "StudyNinja", avatar: "🥷", studyTime: 189.3, goals: 112, streak: 28, points: 11847, badge: "🥉", level: "Expert" },
-        { rank: 4, username: "FlashCardHero", avatar: "⚡", studyTime: 147.1, goals: 104, streak: 21, points: 8954, badge: "⭐", level: "Advanced" },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: 171.8, goals: 98, streak: 22, points: 10438, badge: "⭐", level: "Expert" },
-        { rank: 6, username: "NightOwl", avatar: "🦉", studyTime: 138.9, goals: 93, streak: 19, points: 8423, badge: "⭐", level: "Advanced" },
-        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: 152.7, goals: 89, streak: 18, points: 9301, badge: "⭐", level: "Advanced" },
-        { rank: 8, username: "EarlyBird", avatar: "🐦", studyTime: 129.7, goals: 88, streak: 23, points: 7854, badge: "⭐", level: "Intermediate" },
-        { rank: 9, username: "StudyBuddy", avatar: "🤝", studyTime: 134.2, goals: 81, streak: 12, points: 8089, badge: "⭐", level: "Intermediate" },
-        { rank: 10, username: "DeepThinker", avatar: "💭", studyTime: 142.8, goals: 76, streak: 14, points: 8687, badge: "⭐", level: "Advanced" },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: 48.3, goals: 23, streak: 5, points: 2342, badge: "🔰", level: "Beginner" }
+        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "176.5", goals: 124, streak: 31, points: 10952, badge: "🏆", level: 9 },
+        { rank: 2, username: "CramQueen", avatar: "👑", studyTime: "158.2", goals: 116, streak: 25, points: 9789, badge: "🥈", level: 7 },
+        { rank: 3, username: "StudyNinja", avatar: "🥷", studyTime: "189.3", goals: 112, streak: 28, points: 11847, badge: "🥉", level: 8 },
+        { rank: 4, username: "FlashCardHero", avatar: "⚡", studyTime: "147.1", goals: 104, streak: 21, points: 8954, badge: "⭐", level: 5 },
+        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "171.8", goals: 98, streak: 22, points: 10438, badge: "⭐", level: 6 },
+        { rank: 6, username: "NightOwl", avatar: "🦉", studyTime: "138.9", goals: 93, streak: 19, points: 8423, badge: "⭐", level: 3 },
+        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: "152.7", goals: 89, streak: 18, points: 9301, badge: "⭐", level: 4 },
+        { rank: 8, username: "EarlyBird", avatar: "🐦", studyTime: "129.7", goals: 88, streak: 23, points: 7854, badge: "⭐", level: 1 },
+        { rank: 9, username: "StudyBuddy", avatar: "🤝", studyTime: "134.2", goals: 81, streak: 12, points: 8089, badge: "⭐", level: 2 },
+        { rank: 10, username: "DeepThinker", avatar: "💭", studyTime: "142.8", goals: 76, streak: 14, points: 8687, badge: "⭐", level: 5 },
+        { rank: 1842, username: "You", avatar: "😊", studyTime: "48.3", goals: 23, streak: 5, points: 2342, badge: "🔰", level: 0 }
       ]
     },
     "Study Streak": {
       "Weekly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: 42.8, goals: 31, streak: 15, points: 2438, badge: "🏆", level: "Expert" },
-        { rank: 2, username: "StudyNinja", avatar: "🥷", studyTime: 47.5, goals: 28, streak: 12, points: 2847, badge: "🥈", level: "Expert" },
-        { rank: 3, username: "CramQueen", avatar: "👑", studyTime: 38.7, goals: 29, streak: 11, points: 2189, badge: "🥉", level: "Advanced" },
-        { rank: 4, username: "EarlyBird", avatar: "🐦", studyTime: 28.8, goals: 24, streak: 10, points: 1589, badge: "⭐", level: "Intermediate" },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: 45.2, goals: 25, streak: 9, points: 2652, badge: "⭐", level: "Expert" },
-        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: 34.9, goals: 26, streak: 8, points: 1954, badge: "⭐", level: "Advanced" },
-        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: 40.1, goals: 22, streak: 7, points: 2301, badge: "⭐", level: "Advanced" },
-        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: 30.2, goals: 21, streak: 6, points: 1697, badge: "⭐", level: "Intermediate" },
-        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: 36.3, goals: 19, streak: 5, points: 2087, badge: "⭐", level: "Advanced" },
-        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: 32.5, goals: 17, streak: 4, points: 1823, badge: "⭐", level: "Intermediate" },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: 12.7, goals: 8, streak: 2, points: 542, badge: "🔰", level: "Beginner" }
+        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "42.8", goals: 31, streak: 15, points: 2438, badge: "🏆", level: 8 },
+        { rank: 2, username: "StudyNinja", avatar: "🥷", studyTime: "47.5", goals: 28, streak: 12, points: 2847, badge: "🥈", level: 7 },
+        { rank: 3, username: "CramQueen", avatar: "👑", studyTime: "38.7", goals: 29, streak: 11, points: 2189, badge: "🥉", level: 6 },
+        { rank: 4, username: "EarlyBird", avatar: "🐦", studyTime: "28.8", goals: 24, streak: 10, points: 1589, badge: "⭐", level: 1 },
+        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "45.2", goals: 25, streak: 9, points: 2652, badge: "⭐", level: 5 },
+        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: "34.9", goals: 26, streak: 8, points: 1954, badge: "⭐", level: 4 },
+        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: "40.1", goals: 22, streak: 7, points: 2301, badge: "⭐", level: 3 },
+        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: "30.2", goals: 21, streak: 6, points: 1697, badge: "⭐", level: 2 },
+        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: "36.3", goals: 19, streak: 5, points: 2087, badge: "⭐", level: 3 },
+        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: "32.5", goals: 17, streak: 4, points: 1823, badge: "⭐", level: 2 },
+        { rank: 1842, username: "You", avatar: "😊", studyTime: "12.7", goals: 8, streak: 2, points: 542, badge: "🔰", level: 0 }
       ],
       "Monthly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: 176.5, goals: 124, streak: 31, points: 10952, badge: "🏆", level: "Expert" },
-        { rank: 2, username: "StudyNinja", avatar: "🥷", studyTime: 189.3, goals: 112, streak: 28, points: 11847, badge: "🥈", level: "Expert" },
-        { rank: 3, username: "CramQueen", avatar: "👑", studyTime: 158.2, goals: 116, streak: 25, points: 9789, badge: "🥉", level: "Expert" },
-        { rank: 4, username: "EarlyBird", avatar: "🐦", studyTime: 129.7, goals: 88, streak: 23, points: 7854, badge: "⭐", level: "Intermediate" },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: 171.8, goals: 98, streak: 22, points: 10438, badge: "⭐", level: "Expert" },
-        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: 147.1, goals: 104, streak: 21, points: 8954, badge: "⭐", level: "Advanced" },
-        { rank: 7, username: "NightOwl", avatar: "🦉", studyTime: 138.9, goals: 93, streak: 19, points: 8423, badge: "⭐", level: "Advanced" },
-        { rank: 8, username: "ZenLearner", avatar: "🧘", studyTime: 152.7, goals: 89, streak: 18, points: 9301, badge: "⭐", level: "Advanced" },
-        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: 142.8, goals: 76, streak: 14, points: 8687, badge: "⭐", level: "Advanced" },
-        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: 134.2, goals: 81, streak: 12, points: 8089, badge: "⭐", level: "Intermediate" },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: 48.3, goals: 23, streak: 5, points: 2342, badge: "🔰", level: "Beginner" }
+        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "176.5", goals: 124, streak: 31, points: 10952, badge: "🏆", level: 9 },
+        { rank: 2, username: "StudyNinja", avatar: "🥷", studyTime: "189.3", goals: 112, streak: 28, points: 11847, badge: "🥈", level: 8 },
+        { rank: 3, username: "CramQueen", avatar: "👑", studyTime: "158.2", goals: 116, streak: 25, points: 9789, badge: "🥉", level: 7 },
+        { rank: 4, username: "EarlyBird", avatar: "🐦", studyTime: "129.7", goals: 88, streak: 23, points: 7854, badge: "⭐", level: 1 },
+        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "171.8", goals: 98, streak: 22, points: 10438, badge: "⭐", level: 6 },
+        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: "147.1", goals: 104, streak: 21, points: 8954, badge: "⭐", level: 5 },
+        { rank: 7, username: "NightOwl", avatar: "🦉", studyTime: "138.9", goals: 93, streak: 19, points: 8423, badge: "⭐", level: 4 },
+        { rank: 8, username: "ZenLearner", avatar: "🧘", studyTime: "152.7", goals: 89, streak: 18, points: 9301, badge: "⭐", level: 5 },
+        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: "142.8", goals: 76, streak: 14, points: 8687, badge: "⭐", level: 4 },
+        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: "134.2", goals: 81, streak: 12, points: 8089, badge: "⭐", level: 3 },
+        { rank: 1842, username: "You", avatar: "😊", studyTime: "48.3", goals: 23, streak: 5, points: 2342, badge: "🔰", level: 0 }
       ]
     }
   };
 
-  const currentData = leaderboardData[selectedCategory]?.[selectedTimeframe] || [];
+  const currentData = leaderboardData[selectedCategory][selectedTimeframe] || [];
   const userRank = currentData.find(user => user.username === "You");
   const topUsers = currentData.filter(user => user.username !== "You").slice(0, 10);
 
@@ -707,266 +711,292 @@ function LeaderboardContent() {
     return "from-indigo-400 to-purple-600";
   };
 
-  const getLevelColor = (level: string) => {
+  const getLevelColor = (level: number) => {
     switch (level) {
-      case "Expert": return "from-red-500 to-pink-600";
-      case "Advanced": return "from-purple-500 to-indigo-600";
-      case "Intermediate": return "from-blue-500 to-cyan-600";
-      case "Beginner": return "from-green-500 to-emerald-600";
+      case 10: return "from-red-500 to-pink-600";
+      case 9: return "from-purple-500 to-indigo-600";
+      case 8: return "from-blue-500 to-cyan-600";
+      case 7: return "from-green-500 to-emerald-600";
+      case 6: return "from-teal-500 to-blue-600";
+      case 5: return "from-yellow-500 to-orange-600";
+      case 4: return "from-orange-500 to-red-600";
+      case 3: return "from-pink-500 to-purple-600";
+      case 2: return "from-indigo-500 to-blue-600";
+      case 1: return "from-cyan-500 to-green-600";
       default: return "from-gray-500 to-gray-600";
     }
   };
 
+  const getPositionSuffix = (position: number): string => {
+    if (position >= 11 && position <= 13) return 'th';
+    const lastDigit = position % 10;
+    switch (lastDigit) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  const getValueDisplay = (user: LeaderboardUser): string => {
+    switch (selectedCategory) {
+      case 'study_time': return user.studyTime;
+      case 'goals': return user.goals.toString();
+      case 'streak': return `${user.streak} days`;
+      default: return user.studyTime;
+    }
+  };
+
+  const getCategoryTitle = (): string => {
+    switch (selectedCategory) {
+      case 'study_time': return 'Study Time';
+      case 'goals': return 'Goals Completed';
+      case 'streak': return 'Study Streak';
+      default: return 'Study Time';
+    }
+  };
+
+  const getCategoryIcon = () => {
+    switch (selectedCategory) {
+      case 'study_time': return <Clock className="w-5 h-5" />;
+      case 'goals': return <Target className="w-5 h-5" />;
+      case 'streak': return <Zap className="w-5 h-5" />;
+      default: return <Clock className="w-5 h-5" />;
+    }
+  };
+
   return (
-    <div className="flex-1 bg-gray-900 overflow-hidden h-screen">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-900/50 via-purple-900/50 to-pink-900/50 backdrop-blur-lg border-b border-indigo-800/30 px-4 md:px-6 py-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-yellow-300 via-purple-300 to-pink-300 bg-clip-text text-transparent flex items-center gap-2">
-                <Trophy size={28} className="text-yellow-400" />
-                Leaderboard
-              </h1>
-              <p className="text-indigo-200/80 mt-1">
-                Compete with fellow students and climb the ranks!
-              </p>
-            </div>
-            
-            {/* Controls */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                value={selectedTimeframe}
-                onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="px-4 py-2 bg-gray-800/80 border border-indigo-700/50 rounded-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-              >
-                <option value="Weekly">This Week</option>
-                <option value="Monthly">This Month</option>
-              </select>
-              
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 bg-gray-800/80 border border-indigo-700/50 rounded-lg text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-              >
-                <option value="Study Time">Study Time</option>
-                <option value="Goals Completed">Goals Completed</option>
-                <option value="Study Streak">Study Streak</option>
-              </select>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
+      {/* Background with overlay */}
+      <div className="absolute inset-0">
+        <img
+          src="https://i.pinimg.com/originals/64/ff/aa/64ffaa8061d3643b563785e95f040705.gif"
+          alt="Animated background for leaderboard"
+          className="w-full h-full object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/60 via-purple-900/50 to-pink-900/60"></div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Top 3 Podium */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-white mb-6 text-center">🏆 Top Champions 🏆</h2>
-            <div className="flex justify-center items-end gap-4 md:gap-8">
-              {topUsers.slice(0, 3).map((user, index) => {
-                const actualRank = index + 1;
-                const podiumOrder = [1, 0, 2]; // Second place (index 1), First place (index 0), Third place (index 2)
-                const height = actualRank === 1 ? "h-32" : actualRank === 2 ? "h-28" : "h-24";
-                
-                return (
-                  <div key={user.username} className={`flex flex-col items-center ${actualRank === 1 ? 'order-2' : actualRank === 2 ? 'order-1' : 'order-3'}`}>
-                    <div className={`bg-gradient-to-br ${getRankColor(actualRank)} rounded-full p-1 mb-3 shadow-lg`}>
-                      <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center text-2xl">
-                        {user.avatar}
-                      </div>
-                    </div>
-                    <div className={`bg-gradient-to-t ${getRankColor(actualRank)} ${height} w-20 rounded-t-lg flex flex-col items-center justify-start pt-2 shadow-lg`}>
-                      <div className="text-white font-bold text-2xl">{user.badge}</div>
-                      <div className="text-white text-xs font-bold mt-1">#{actualRank}</div>
-                    </div>
-                    <div className="text-center mt-2">
-                      <div className="font-bold text-white text-sm">{user.username}</div>
-                      <div className="text-xs text-gray-300">
-                        {selectedCategory === "Study Time" ? `${user.studyTime}h` : 
-                         selectedCategory === "Goals Completed" ? `${user.goals} goals` : 
-                         `${user.streak} days`}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+      <div className="relative z-10 p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Global Leaderboard
+            </h1>
+            <p className="text-gray-300">
+              Compete with students worldwide and track your progress
+            </p>
+          </div>
+
+          {/* Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            {/* Timeframe Selector */}
+            <div className="flex bg-gray-800/60 backdrop-blur-lg rounded-xl p-1 border border-gray-700">
+              <button
+                onClick={() => setSelectedTimeframe('weekly')}
+                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  selectedTimeframe === 'weekly'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Weekly
+              </button>
+              <button
+                onClick={() => setSelectedTimeframe('monthly')}
+                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  selectedTimeframe === 'monthly'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+
+            {/* Category Selector */}
+            <div className="flex bg-gray-800/60 backdrop-blur-lg rounded-xl p-1 border border-gray-700">
+              <button
+                onClick={() => setSelectedCategory('study_time')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  selectedCategory === 'study_time'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                Study Time
+              </button>
+              <button
+                onClick={() => setSelectedCategory('goals')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  selectedCategory === 'goals'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                <Target className="w-4 h-4" />
+                Goals
+              </button>
+              <button
+                onClick={() => setSelectedCategory('streak')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  selectedCategory === 'streak'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                <Zap className="w-4 h-4" />
+                Streak
+              </button>
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Main Leaderboard */}
-            <div className="lg:col-span-2">
-              <div className="bg-gray-800/60 backdrop-blur-lg rounded-xl border border-gray-700/50 overflow-hidden">
-                <div className="p-4 border-b border-gray-700/50 bg-gradient-to-r from-indigo-900/30 to-purple-900/30">
-                  <h3 className="font-bold text-white flex items-center gap-2">
-                    <BarChart2 size={18} className="text-indigo-400" />
-                    Rankings - {selectedCategory} ({selectedTimeframe})
-                  </h3>
-                </div>
-                
-                <div className="max-h-96 overflow-y-auto">
-                  {topUsers.map((user) => (
-                    <div key={user.username} className="flex items-center p-4 border-b border-gray-700/30 hover:bg-gray-700/30 transition-all duration-200">
-                      <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${getRankColor(user.rank)} flex items-center justify-center text-white font-bold text-sm mr-4 shadow-md`}>
-                        {user.rank}
+          {/* Top 3 Podium */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-4xl mx-auto">
+            {[1, 0, 2].map((index) => {
+              const user = currentData[index];
+              if (!user) return null;
+              
+              const position = user.rank;
+              const isFirst = position === 1;
+              const isSecond = position === 2;
+              const isThird = position === 3;
+              
+              return (
+                <div
+                  key={user.username}
+                  className={`relative ${
+                    isFirst ? 'md:order-2' : isSecond ? 'md:order-1' : 'md:order-3'
+                  }`}
+                >
+                  <div
+                    className={`bg-gray-800/60 backdrop-blur-lg rounded-2xl p-6 border text-center transform transition-all duration-300 hover:scale-105 ${
+                      isFirst
+                        ? 'border-yellow-500/50 shadow-yellow-500/20 shadow-lg md:scale-110'
+                        : isSecond
+                        ? 'border-gray-400/50 shadow-gray-400/20 shadow-lg md:scale-105'
+                        : 'border-orange-500/50 shadow-orange-500/20 shadow-lg'
+                    }`}
+                  >
+                    {/* Crown for first place */}
+                    {isFirst && (
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <div className="text-3xl">👑</div>
                       </div>
-                      
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-lg mr-4 shadow-md">
-                        {user.avatar}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-white">{user.username}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs bg-gradient-to-r ${getLevelColor(user.level)} text-white shadow-sm`}>
-                            {user.level}
-                          </span>
-                          <span className="text-lg">{user.badge}</span>
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          {user.studyTime}h studied • {user.goals} goals • {user.streak} day streak
-                        </div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <div className="font-bold text-indigo-300">
-                          {selectedCategory === "Study Time" ? `${user.studyTime}h` : 
-                           selectedCategory === "Goals Completed" ? user.goals : 
-                           `${user.streak} days`}
-                        </div>
-                        <div className="text-sm text-gray-400">{user.points} pts</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Your Rank */}
-              {userRank && (
-                <div className="mt-4 bg-gradient-to-r from-indigo-800/60 to-purple-800/60 backdrop-blur-lg rounded-xl border border-indigo-600/50 p-4">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm mr-4">
-                      {userRank.rank}
-                    </div>
+                    )}
                     
-                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-lg mr-4">
-                      {userRank.avatar}
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white">{userRank.username} (You)</span>
-                        <span className={`px-2 py-1 rounded-full text-xs bg-gradient-to-r ${getLevelColor(userRank.level)} text-white`}>
-                          {userRank.level}
-                        </span>
-                        <span className="text-lg">{userRank.badge}</span>
-                      </div>
-                      <div className="text-sm text-indigo-200">
-                        {userRank.studyTime}h studied • {userRank.goals} goals • {userRank.streak} day streak
+                    {/* Avatar */}
+                    <div className="relative mb-4">
+                      <img
+                        src={user.avatar}
+                        alt={`${user.username} avatar`}
+                        className="w-20 h-20 rounded-full mx-auto border-4 border-gray-600"
+                      />
+                      <div
+                        className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                          isFirst
+                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
+                            : isSecond
+                            ? 'bg-gradient-to-r from-gray-400 to-gray-600'
+                            : 'bg-gradient-to-r from-orange-400 to-orange-600'
+                        }`}
+                      >
+                        {position}
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="font-bold text-indigo-300">
-                        {selectedCategory === "Study Time" ? `${userRank.studyTime}h` : 
-                         selectedCategory === "Goals Completed" ? userRank.goals : 
-                         `${userRank.streak} days`}
-                      </div>
-                      <div className="text-sm text-indigo-300">{userRank.points} pts</div>
+                    {/* User Info */}
+                    <h3 className="text-lg font-semibold text-white mb-1">
+                      {user.username}
+                    </h3>
+                    <div className="text-2xl font-bold text-white mb-2">
+                      {getValueDisplay(user)}
+                    </div>
+                    <div className="text-sm text-gray-400 mb-3">
+                      {user.badge}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Level {user.level} • {user.points} pts
                     </div>
                   </div>
                 </div>
-              )}
+              );
+            })}
+          </div>
+
+          {/* Full Leaderboard */}
+          <div className="bg-gray-800/60 backdrop-blur-lg rounded-2xl border border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-700">
+              <div className="flex items-center gap-3">
+                {getCategoryIcon()}
+                <h2 className="text-2xl font-bold text-white">
+                  {getCategoryTitle()} Rankings
+                </h2>
+                <span className="text-sm text-gray-400">
+                  ({selectedTimeframe})
+                </span>
+              </div>
             </div>
-
-            {/* Side Stats */}
-            <div className="space-y-6">
-              {/* Competition Stats */}
-              <div className="bg-gray-800/60 backdrop-blur-lg rounded-xl border border-gray-700/50 p-4">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <Flame size={18} className="text-orange-400" />
-                  Competition Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Total Participants</span>
-                    <span className="font-bold text-white">2,847</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Active This Week</span>
-                    <span className="font-bold text-emerald-400">1,923</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Average Study Time</span>
-                    <span className="font-bold text-indigo-400">18.5h</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Top Streak</span>
-                    <span className="font-bold text-yellow-400">47 days</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Level Progress */}
-              <div className="bg-gray-800/60 backdrop-blur-lg rounded-xl border border-gray-700/50 p-4">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <User size={18} className="text-purple-400" />
-                  Your Progress
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="text-gray-300">Current Level</span>
-                      <span className={`px-2 py-1 rounded-full text-xs bg-gradient-to-r ${getLevelColor("Beginner")} text-white`}>
-                        Beginner
-                      </span>
+            
+            <div className="divide-y divide-gray-700">
+              {currentData.map((user) => (
+                <div
+                  key={user.username}
+                  className="p-4 hover:bg-gray-700/30 transition-colors duration-200 flex items-center gap-4"
+                >
+                  {/* Rank */}
+                  <div className="flex-shrink-0 w-12 text-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        user.rank <= 3
+                          ? user.rank === 1
+                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900'
+                            : user.rank === 2
+                            ? 'bg-gradient-to-r from-gray-400 to-gray-600 text-white'
+                            : 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
+                          : 'bg-gray-600 text-gray-300'
+                      }`}
+                    >
+                      {user.rank}
                     </div>
-                    <div className="w-full bg-gray-700 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full" style={{ width: "35%" }}></div>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">12h more to reach Intermediate</div>
                   </div>
                   
-                  <div className="border-t border-gray-700 pt-3">
-                    <div className="text-sm text-gray-300 mb-2">Points to next rank:</div>
-                    <div className="text-2xl font-bold text-indigo-400">58 pts</div>
-                    <div className="text-xs text-gray-400">Complete 3 more goals this week!</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Achievement Badges */}
-              <div className="bg-gray-800/60 backdrop-blur-lg rounded-xl border border-gray-700/50 p-4">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <Trophy size={18} className="text-yellow-400" />
-                  Recent Achievements
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-2 bg-gray-700/30 rounded-lg">
-                    <span className="text-2xl">🔥</span>
-                    <div>
-                      <div className="text-sm font-medium text-white">First Streak</div>
-                      <div className="text-xs text-gray-400">Complete 2 days in a row</div>
+                  {/* Avatar */}
+                  <img
+                    src={user.avatar}
+                    alt={`${user.username} avatar`}
+                    className="w-12 h-12 rounded-full border-2 border-gray-600"
+                  />
+                  
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-white truncate">
+                        {user.username}
+                      </h3>
+                      <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
+                        Lv. {user.level}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {user.badge} • {user.points} points
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-2 bg-gray-700/30 rounded-lg">
-                    <span className="text-2xl">📚</span>
-                    <div>
-                      <div className="text-sm font-medium text-white">Goal Crusher</div>
-                      <div className="text-xs text-gray-400">Complete 5 goals</div>
+                  
+                  {/* Value */}
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-white">
+                      {getValueDisplay(user)}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-2 bg-gray-700/20 rounded-lg opacity-50">
-                    <span className="text-2xl">⏰</span>
-                    <div>
-                      <div className="text-sm font-medium text-gray-400">Time Master</div>
-                      <div className="text-xs text-gray-500">Study for 25 hours (13h left)</div>
+                    <div className="text-xs text-gray-400">
+                      {getPositionSuffix(user.rank)} place
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>

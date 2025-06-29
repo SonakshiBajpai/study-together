@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Target,
   Plus,
@@ -254,9 +254,8 @@ export default function StudyGoalsContent() {
   };
 
   const handleWeeklyReport = () => {
-    // Navigate to stats section
+    const event = new CustomEvent('navigate-to-route', { detail: 'solostudy' });
     if (typeof window !== 'undefined') {
-      const event = new CustomEvent('navigate-to-route', { detail: 'studystats' });
       window.dispatchEvent(event);
     }
   };
