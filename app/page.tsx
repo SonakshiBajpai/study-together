@@ -181,6 +181,93 @@ interface LeaderboardData {
   };
 }
 
+// Sidebar Component
+function Sidebar({
+  currentRoute,
+  setCurrentRoute,
+  sidebarCollapsed,
+  setSidebarCollapsed,
+}: {
+  currentRoute: string;
+  setCurrentRoute: (route: string) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+}) {
+  const navItems = [
+    { icon: <Home size={22} />, label: "Dashboard", route: "dashboard" },
+    { icon: <Users size={22} />, label: "Solo Study", route: "solostudy" },
+    { icon: <Target size={22} />, label: "Study Goals", route: "studygoals" },
+    { icon: <MessageSquare size={22} />, label: "Chat Rooms", route: "chatrooms" },
+    { icon: <BarChart2 size={22} />, label: "Study Stats", route: "studystats" },
+    { icon: <Trophy size={22} />, label: "Leaderboard", route: "leaderboard" },
+  ];
+
+  return (
+    <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900/80 backdrop-blur-lg border-r border-gray-800 h-full flex flex-col transition-all duration-300`}>
+      {/* Header */}
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between">
+          {!sidebarCollapsed && (
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-white">
+                  <path
+                    fill="currentColor"
+                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                  />
+                </svg>
+              </div>
+              <span className="text-white font-semibold">StudyHub</span>
+            </div>
+          )}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+          >
+            <Menu size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 p-4">
+        <div className="space-y-2">
+          {navItems.map((item) => (
+            <NavItem
+              key={item.route}
+              icon={item.icon}
+              label={item.label}
+              active={currentRoute === item.route}
+              onClick={() => setCurrentRoute(item.route)}
+              collapsed={sidebarCollapsed}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Nav Item Component
+function NavItem({ icon, label, active, onClick, collapsed }: NavItemProps) {
+  return (
+    <div
+      className={`flex items-center ${collapsed ? 'justify-center' : ''} p-3 rounded-lg cursor-pointer transition-all duration-300 ${
+        active
+          ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+          : "text-gray-300 hover:bg-gray-800/50 hover:text-white"
+      }`}
+      onClick={onClick}
+    >
+      <div className={`${collapsed ? '' : 'mr-3'}`}>{icon}</div>
+      {!collapsed && <div className="font-medium">{label}</div>}
+      {!collapsed && label === "Chat Rooms" && (
+        <div className="ml-auto w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+      )}
+    </div>
+  );
+}
+
 export default function StudyApp() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("timer");
@@ -399,9 +486,13 @@ export default function StudyApp() {
             setTimerState={setTimerState}
           />
         ) : currentRoute === "studygoals" ? (
-          <StudyGoalsContent />
+          <div className="flex-1">
+            <StudyGoalsContent />
+          </div>
         ) : (
-          <PlaceholderContent />
+          <div className="flex-1">
+            <PlaceholderContent />
+          </div>
         )}
 
         {activeModal === "break" && (
@@ -581,7 +672,7 @@ const DashboardContent = ({ setCurrentRoute }: { setCurrentRoute: (route: string
 
           {/* Motivational Quote */}
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20 mb-4">
-            <div className="text-center">
+      <div className="text-center">
               <p className="text-white/90 italic text-sm mb-2">
                 "Success is the sum of small efforts, repeated day in and day out."
               </p>
@@ -609,531 +700,12 @@ const DashboardContent = ({ setCurrentRoute }: { setCurrentRoute: (route: string
 };
 
 function LeaderboardContent() {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'weekly' | 'monthly'>('weekly');
-  const [selectedCategory, setSelectedCategory] = useState<'study_time' | 'goals' | 'streak'>('study_time');
-  
-  // Mock leaderboard data
-  const leaderboardData: LeaderboardData = {
-    "Study Time": {
-      "Weekly": [
-        { rank: 1, username: "StudyNinja", avatar: "🥷", studyTime: "47.5", goals: 28, streak: 12, points: 2847, badge: "🏆", level: 10 },
-        { rank: 2, username: "FocusMaster", avatar: "🧠", studyTime: "45.2", goals: 25, streak: 9, points: 2652, badge: "🥈", level: 9 },
-        { rank: 3, username: "BookWorm", avatar: "📚", studyTime: "42.8", goals: 31, streak: 15, points: 2438, badge: "🥉", level: 8 },
-        { rank: 4, username: "ZenLearner", avatar: "🧘", studyTime: "40.1", goals: 22, streak: 7, points: 2301, badge: "⭐", level: 7 },
-        { rank: 5, username: "CramQueen", avatar: "👑", studyTime: "38.7", goals: 29, streak: 11, points: 2189, badge: "⭐", level: 6 },
-        { rank: 6, username: "DeepThinker", avatar: "💭", studyTime: "36.3", goals: 19, streak: 5, points: 2087, badge: "⭐", level: 5 },
-        { rank: 7, username: "FlashCardHero", avatar: "⚡", studyTime: "34.9", goals: 26, streak: 8, points: 1954, badge: "⭐", level: 4 },
-        { rank: 8, username: "StudyBuddy", avatar: "🤝", studyTime: "32.5", goals: 17, streak: 4, points: 1823, badge: "⭐", level: 3 },
-        { rank: 9, username: "NightOwl", avatar: "🦉", studyTime: "30.2", goals: 21, streak: 6, points: 1697, badge: "⭐", level: 2 },
-        { rank: 10, username: "EarlyBird", avatar: "🐦", studyTime: "28.8", goals: 24, streak: 10, points: 1589, badge: "⭐", level: 1 },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: "12.7", goals: 8, streak: 2, points: 542, badge: "🔰", level: 0 }
-      ],
-      "Monthly": [
-        { rank: 1, username: "StudyNinja", avatar: "🥷", studyTime: "189.3", goals: 112, streak: 28, points: 11847, badge: "🏆", level: 10 },
-        { rank: 2, username: "BookWorm", avatar: "📚", studyTime: "176.5", goals: 124, streak: 31, points: 10952, badge: "🥈", level: 9 },
-        { rank: 3, username: "FocusMaster", avatar: "🧠", studyTime: "171.8", goals: 98, streak: 22, points: 10438, badge: "🥉", level: 8 },
-        { rank: 4, username: "CramQueen", avatar: "👑", studyTime: "158.2", goals: 116, streak: 25, points: 9789, badge: "⭐", level: 7 },
-        { rank: 5, username: "ZenLearner", avatar: "🧘", studyTime: "152.7", goals: 89, streak: 18, points: 9301, badge: "⭐", level: 6 },
-        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: "147.1", goals: 104, streak: 21, points: 8954, badge: "⭐", level: 5 },
-        { rank: 7, username: "DeepThinker", avatar: "💭", studyTime: "142.8", goals: 76, streak: 14, points: 8687, badge: "⭐", level: 4 },
-        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: "138.9", goals: 93, streak: 19, points: 8423, badge: "⭐", level: 3 },
-        { rank: 9, username: "StudyBuddy", avatar: "🤝", studyTime: "134.2", goals: 81, streak: 12, points: 8089, badge: "⭐", level: 2 },
-        { rank: 10, username: "EarlyBird", avatar: "🐦", studyTime: "129.7", goals: 88, streak: 23, points: 7854, badge: "⭐", level: 1 },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: "48.3", goals: 23, streak: 5, points: 2342, badge: "🔰", level: 0 }
-      ]
-    },
-    "Goals Completed": {
-      "Weekly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "42.8", goals: 31, streak: 15, points: 2438, badge: "🏆", level: 8 },
-        { rank: 2, username: "CramQueen", avatar: "👑", studyTime: "38.7", goals: 29, streak: 11, points: 2189, badge: "🥈", level: 6 },
-        { rank: 3, username: "StudyNinja", avatar: "🥷", studyTime: "47.5", goals: 28, streak: 12, points: 2847, badge: "🥉", level: 7 },
-        { rank: 4, username: "FlashCardHero", avatar: "⚡", studyTime: "34.9", goals: 26, streak: 8, points: 1954, badge: "⭐", level: 4 },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "45.2", goals: 25, streak: 9, points: 2652, badge: "⭐", level: 5 },
-        { rank: 6, username: "EarlyBird", avatar: "🐦", studyTime: "28.8", goals: 24, streak: 10, points: 1589, badge: "⭐", level: 1 },
-        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: "40.1", goals: 22, streak: 7, points: 2301, badge: "⭐", level: 2 },
-        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: "30.2", goals: 21, streak: 6, points: 1697, badge: "⭐", level: 0 },
-        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: "36.3", goals: 19, streak: 5, points: 2087, badge: "⭐", level: 3 },
-        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: "32.5", goals: 17, streak: 4, points: 1823, badge: "⭐", level: 2 },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: "12.7", goals: 8, streak: 2, points: 542, badge: "🔰", level: 0 }
-      ],
-      "Monthly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "176.5", goals: 124, streak: 31, points: 10952, badge: "🏆", level: 9 },
-        { rank: 2, username: "CramQueen", avatar: "👑", studyTime: "158.2", goals: 116, streak: 25, points: 9789, badge: "🥈", level: 7 },
-        { rank: 3, username: "StudyNinja", avatar: "🥷", studyTime: "189.3", goals: 112, streak: 28, points: 11847, badge: "🥉", level: 8 },
-        { rank: 4, username: "FlashCardHero", avatar: "⚡", studyTime: "147.1", goals: 104, streak: 21, points: 8954, badge: "⭐", level: 5 },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "171.8", goals: 98, streak: 22, points: 10438, badge: "⭐", level: 6 },
-        { rank: 6, username: "NightOwl", avatar: "🦉", studyTime: "138.9", goals: 93, streak: 19, points: 8423, badge: "⭐", level: 3 },
-        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: "152.7", goals: 89, streak: 18, points: 9301, badge: "⭐", level: 4 },
-        { rank: 8, username: "EarlyBird", avatar: "🐦", studyTime: "129.7", goals: 88, streak: 23, points: 7854, badge: "⭐", level: 1 },
-        { rank: 9, username: "StudyBuddy", avatar: "🤝", studyTime: "134.2", goals: 81, streak: 12, points: 8089, badge: "⭐", level: 2 },
-        { rank: 10, username: "DeepThinker", avatar: "💭", studyTime: "142.8", goals: 76, streak: 14, points: 8687, badge: "⭐", level: 5 },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: "48.3", goals: 23, streak: 5, points: 2342, badge: "🔰", level: 0 }
-      ]
-    },
-    "Study Streak": {
-      "Weekly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "42.8", goals: 31, streak: 15, points: 2438, badge: "🏆", level: 8 },
-        { rank: 2, username: "StudyNinja", avatar: "🥷", studyTime: "47.5", goals: 28, streak: 12, points: 2847, badge: "🥈", level: 7 },
-        { rank: 3, username: "CramQueen", avatar: "👑", studyTime: "38.7", goals: 29, streak: 11, points: 2189, badge: "🥉", level: 6 },
-        { rank: 4, username: "EarlyBird", avatar: "🐦", studyTime: "28.8", goals: 24, streak: 10, points: 1589, badge: "⭐", level: 1 },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "45.2", goals: 25, streak: 9, points: 2652, badge: "⭐", level: 5 },
-        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: "34.9", goals: 26, streak: 8, points: 1954, badge: "⭐", level: 4 },
-        { rank: 7, username: "ZenLearner", avatar: "🧘", studyTime: "40.1", goals: 22, streak: 7, points: 2301, badge: "⭐", level: 3 },
-        { rank: 8, username: "NightOwl", avatar: "🦉", studyTime: "30.2", goals: 21, streak: 6, points: 1697, badge: "⭐", level: 2 },
-        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: "36.3", goals: 19, streak: 5, points: 2087, badge: "⭐", level: 3 },
-        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: "32.5", goals: 17, streak: 4, points: 1823, badge: "⭐", level: 2 },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: "12.7", goals: 8, streak: 2, points: 542, badge: "🔰", level: 0 }
-      ],
-      "Monthly": [
-        { rank: 1, username: "BookWorm", avatar: "📚", studyTime: "176.5", goals: 124, streak: 31, points: 10952, badge: "🏆", level: 9 },
-        { rank: 2, username: "StudyNinja", avatar: "🥷", studyTime: "189.3", goals: 112, streak: 28, points: 11847, badge: "🥈", level: 8 },
-        { rank: 3, username: "CramQueen", avatar: "👑", studyTime: "158.2", goals: 116, streak: 25, points: 9789, badge: "🥉", level: 7 },
-        { rank: 4, username: "EarlyBird", avatar: "🐦", studyTime: "129.7", goals: 88, streak: 23, points: 7854, badge: "⭐", level: 1 },
-        { rank: 5, username: "FocusMaster", avatar: "🧠", studyTime: "171.8", goals: 98, streak: 22, points: 10438, badge: "⭐", level: 6 },
-        { rank: 6, username: "FlashCardHero", avatar: "⚡", studyTime: "147.1", goals: 104, streak: 21, points: 8954, badge: "⭐", level: 5 },
-        { rank: 7, username: "NightOwl", avatar: "🦉", studyTime: "138.9", goals: 93, streak: 19, points: 8423, badge: "⭐", level: 4 },
-        { rank: 8, username: "ZenLearner", avatar: "🧘", studyTime: "152.7", goals: 89, streak: 18, points: 9301, badge: "⭐", level: 5 },
-        { rank: 9, username: "DeepThinker", avatar: "💭", studyTime: "142.8", goals: 76, streak: 14, points: 8687, badge: "⭐", level: 4 },
-        { rank: 10, username: "StudyBuddy", avatar: "🤝", studyTime: "134.2", goals: 81, streak: 12, points: 8089, badge: "⭐", level: 3 },
-        { rank: 1842, username: "You", avatar: "😊", studyTime: "48.3", goals: 23, streak: 5, points: 2342, badge: "🔰", level: 0 }
-      ]
-    }
-  };
-
-  const currentData = leaderboardData[selectedCategory][selectedTimeframe] || [];
-  const userRank = currentData.find(user => user.username === "You");
-  const topUsers = currentData.filter(user => user.username !== "You").slice(0, 10);
-
-  const getRankColor = (rank: number) => {
-    if (rank === 1) return "from-yellow-400 to-yellow-600";
-    if (rank === 2) return "from-gray-300 to-gray-500";
-    if (rank === 3) return "from-amber-600 to-amber-800";
-    return "from-indigo-400 to-purple-600";
-  };
-
-  const getLevelColor = (level: number) => {
-    switch (level) {
-      case 10: return "from-red-500 to-pink-600";
-      case 9: return "from-purple-500 to-indigo-600";
-      case 8: return "from-blue-500 to-cyan-600";
-      case 7: return "from-green-500 to-emerald-600";
-      case 6: return "from-teal-500 to-blue-600";
-      case 5: return "from-yellow-500 to-orange-600";
-      case 4: return "from-orange-500 to-red-600";
-      case 3: return "from-pink-500 to-purple-600";
-      case 2: return "from-indigo-500 to-blue-600";
-      case 1: return "from-cyan-500 to-green-600";
-      default: return "from-gray-500 to-gray-600";
-    }
-  };
-
-  const getPositionSuffix = (position: number): string => {
-    if (position >= 11 && position <= 13) return 'th';
-    const lastDigit = position % 10;
-    switch (lastDigit) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
-    }
-  };
-
-  const getValueDisplay = (user: LeaderboardUser): string => {
-    switch (selectedCategory) {
-      case 'study_time': return user.studyTime;
-      case 'goals': return user.goals.toString();
-      case 'streak': return `${user.streak} days`;
-      default: return user.studyTime;
-    }
-  };
-
-  const getCategoryTitle = (): string => {
-    switch (selectedCategory) {
-      case 'study_time': return 'Study Time';
-      case 'goals': return 'Goals Completed';
-      case 'streak': return 'Study Streak';
-      default: return 'Study Time';
-    }
-  };
-
-  const getCategoryIcon = () => {
-    switch (selectedCategory) {
-      case 'study_time': return <Clock className="w-5 h-5" />;
-      case 'goals': return <Target className="w-5 h-5" />;
-      case 'streak': return <Zap className="w-5 h-5" />;
-      default: return <Clock className="w-5 h-5" />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
-      {/* Background with overlay */}
-      <div className="absolute inset-0">
-        <img
-          src="https://i.pinimg.com/originals/64/ff/aa/64ffaa8061d3643b563785e95f040705.gif"
-          alt="Animated background for leaderboard"
-          className="w-full h-full object-cover opacity-30"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/60 via-purple-900/50 to-pink-900/60"></div>
+    <div className="flex items-center justify-center h-96">
+      <div className="text-center">
+        <div className="text-gray-400 text-lg mb-2">🚧</div>
+        <div className="text-gray-500">This page is under construction</div>
       </div>
-
-      {/* Content */}
-      <div className="relative z-10 p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Global Leaderboard
-            </h1>
-            <p className="text-gray-300">
-              Compete with students worldwide and track your progress
-            </p>
-          </div>
-
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            {/* Timeframe Selector */}
-            <div className="flex bg-gray-800/60 backdrop-blur-lg rounded-xl p-1 border border-gray-700">
-              <button
-                onClick={() => setSelectedTimeframe('weekly')}
-                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  selectedTimeframe === 'weekly'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                Weekly
-              </button>
-              <button
-                onClick={() => setSelectedTimeframe('monthly')}
-                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  selectedTimeframe === 'monthly'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                Monthly
-              </button>
-            </div>
-
-            {/* Category Selector */}
-            <div className="flex bg-gray-800/60 backdrop-blur-lg rounded-xl p-1 border border-gray-700">
-              <button
-                onClick={() => setSelectedCategory('study_time')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === 'study_time'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                <Clock className="w-4 h-4" />
-                Study Time
-              </button>
-              <button
-                onClick={() => setSelectedCategory('goals')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === 'goals'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                <Target className="w-4 h-4" />
-                Goals
-              </button>
-              <button
-                onClick={() => setSelectedCategory('streak')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === 'streak'
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                <Zap className="w-4 h-4" />
-                Streak
-              </button>
-            </div>
-          </div>
-
-          {/* Top 3 Podium */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-4xl mx-auto">
-            {[1, 0, 2].map((index) => {
-              const user = currentData[index];
-              if (!user) return null;
-              
-              const position = user.rank;
-              const isFirst = position === 1;
-              const isSecond = position === 2;
-              const isThird = position === 3;
-              
-              return (
-                <div
-                  key={user.username}
-                  className={`relative ${
-                    isFirst ? 'md:order-2' : isSecond ? 'md:order-1' : 'md:order-3'
-                  }`}
-                >
-                  <div
-                    className={`bg-gray-800/60 backdrop-blur-lg rounded-2xl p-6 border text-center transform transition-all duration-300 hover:scale-105 ${
-                      isFirst
-                        ? 'border-yellow-500/50 shadow-yellow-500/20 shadow-lg md:scale-110'
-                        : isSecond
-                        ? 'border-gray-400/50 shadow-gray-400/20 shadow-lg md:scale-105'
-                        : 'border-orange-500/50 shadow-orange-500/20 shadow-lg'
-                    }`}
-                  >
-                    {/* Crown for first place */}
-                    {isFirst && (
-                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <div className="text-3xl">👑</div>
-                      </div>
-                    )}
-                    
-                    {/* Avatar */}
-                    <div className="relative mb-4">
-                      <img
-                        src={user.avatar}
-                        alt={`${user.username} avatar`}
-                        className="w-20 h-20 rounded-full mx-auto border-4 border-gray-600"
-                      />
-                      <div
-                        className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                          isFirst
-                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-                            : isSecond
-                            ? 'bg-gradient-to-r from-gray-400 to-gray-600'
-                            : 'bg-gradient-to-r from-orange-400 to-orange-600'
-                        }`}
-                      >
-                        {position}
-                      </div>
-                    </div>
-                    
-                    {/* User Info */}
-                    <h3 className="text-lg font-semibold text-white mb-1">
-                      {user.username}
-                    </h3>
-                    <div className="text-2xl font-bold text-white mb-2">
-                      {getValueDisplay(user)}
-                    </div>
-                    <div className="text-sm text-gray-400 mb-3">
-                      {user.badge}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Level {user.level} • {user.points} pts
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Full Leaderboard */}
-          <div className="bg-gray-800/60 backdrop-blur-lg rounded-2xl border border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-700">
-              <div className="flex items-center gap-3">
-                {getCategoryIcon()}
-                <h2 className="text-2xl font-bold text-white">
-                  {getCategoryTitle()} Rankings
-                </h2>
-                <span className="text-sm text-gray-400">
-                  ({selectedTimeframe})
-                </span>
-              </div>
-            </div>
-            
-            <div className="divide-y divide-gray-700">
-              {currentData.map((user) => (
-                <div
-                  key={user.username}
-                  className="p-4 hover:bg-gray-700/30 transition-colors duration-200 flex items-center gap-4"
-                >
-                  {/* Rank */}
-                  <div className="flex-shrink-0 w-12 text-center">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        user.rank <= 3
-                          ? user.rank === 1
-                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900'
-                            : user.rank === 2
-                            ? 'bg-gradient-to-r from-gray-400 to-gray-600 text-white'
-                            : 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
-                          : 'bg-gray-600 text-gray-300'
-                      }`}
-                    >
-                      {user.rank}
-                    </div>
-                  </div>
-                  
-                  {/* Avatar */}
-                  <img
-                    src={user.avatar}
-                    alt={`${user.username} avatar`}
-                    className="w-12 h-12 rounded-full border-2 border-gray-600"
-                  />
-                  
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-white truncate">
-                        {user.username}
-                      </h3>
-                      <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
-                        Lv. {user.level}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      {user.badge} • {user.points} points
-                    </div>
-                  </div>
-                  
-                  {/* Value */}
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-white">
-                      {getValueDisplay(user)}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {getPositionSuffix(user.rank)} place
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Sidebar({
-  currentRoute,
-  setCurrentRoute,
-  sidebarCollapsed,
-  setSidebarCollapsed,
-}: {
-  currentRoute: string;
-  setCurrentRoute: (route: string) => void;
-  sidebarCollapsed: boolean;
-  setSidebarCollapsed: (collapsed: boolean) => void;
-}) {
-  return (
-    <div
-      className={`$${
-        sidebarCollapsed ? "w-12" : "w-20"
-      } bg-gray-900 bg-opacity-90 h-full flex flex-col items-center py-6 z-10 shadow-xl backdrop-blur-md border-r border-gray-800 transition-all duration-300`}
-    >
-      <div className="w-12 h-12 mb-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-        <svg viewBox="0 0 24 24" className="w-8 h-8 text-white">
-          <path
-            fill="currentColor"
-            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
-          />
-        </svg>
-      </div>
-
-      <NavItem
-        icon={<Home size={22} />}
-        label="Dashboard"
-        active={currentRoute === "dashboard"}
-        onClick={() => setCurrentRoute("dashboard")}
-        collapsed={sidebarCollapsed}
-      />
-      <NavItem
-        icon={<Users size={22} />}
-        label="Solo Study"
-        active={currentRoute === "solostudy"}
-        onClick={() => setCurrentRoute("solostudy")}
-        collapsed={sidebarCollapsed}
-      />
-      <NavItem
-        icon={<Target size={22} />}
-        label="Study Goals"
-        active={currentRoute === "studygoals"}
-        onClick={() => setCurrentRoute("studygoals")}
-        collapsed={sidebarCollapsed}
-      />
-      <NavItem
-        icon={<MessageSquare size={22} />}
-        label="Chat Rooms"
-        active={currentRoute === "chatrooms"}
-        onClick={() => setCurrentRoute("chatrooms")}
-        collapsed={sidebarCollapsed}
-      />
-      <NavItem
-        icon={<BarChart2 size={22} />}
-        label="Study Stats"
-        active={currentRoute === "studystats"}
-        onClick={() => setCurrentRoute("studystats")}
-        collapsed={sidebarCollapsed}
-      />
-      <NavItem
-        icon={<Trophy size={22} />}
-        label="Leaderboard"
-        active={currentRoute === "leaderboard"}
-        onClick={() => setCurrentRoute("leaderboard")}
-        collapsed={sidebarCollapsed}
-      />
-      <div className="mt-auto mb-2">
-        <button
-          className="w-8 h-8 flex items-center justify-center rounded-md bg-gray-800 hover:bg-gray-700 text-white transition-all duration-300"
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {sidebarCollapsed ? (
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          ) : (
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function NavItem({ icon, label, active, onClick, collapsed }: NavItemProps) {
-  return (
-    <div
-      className={`w-full flex flex-col items-center justify-center py-4 relative ${
-        active ? "text-white" : "text-gray-500"
-      } cursor-pointer hover:text-gray-300 transition-all duration-300 group`}
-      onClick={onClick}
-    >
-      {active && (
-        <div className="absolute left-0 w-1 h-8 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-r-md"></div>
-      )}
-      <div className="mb-1 transform group-hover:scale-110 transition-transform duration-200">
-        {icon}
-      </div>
-      {!collapsed && <div className="text-xs font-medium">{label}</div>}
-      {label === "Chat Rooms" && !collapsed && (
-        <div className="absolute top-3 right-4 w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-      )}
     </div>
   );
 }
