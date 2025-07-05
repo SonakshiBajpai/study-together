@@ -409,7 +409,7 @@ export default function StudyApp() {
                     darkMode ? "text-white" : "text-gray-900"
                   } font-bold text-lg`}
                 >
-                  StudyFocus
+                  Studify
                 </span>
                 <span
                   className={`${
