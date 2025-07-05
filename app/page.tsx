@@ -657,7 +657,7 @@ function Sidebar({
                   darkMode ? "text-white" : "text-gray-900"
                 } font-bold text-xl`}
               >
-                StudyFocus
+                Studify
               </span>
               <span
                 className={`${
